@@ -3,6 +3,51 @@
 require_once 'teamfundraising.civix.php';
 
 /**
+ Finds all contacts that have a 'Team Member of' realtionship to donor, places them in an array, then sends them an existing email template
+*/
+
+function teamfundraising_civicrm_post($op, $objectName, $objectId, &$objectRef) {
+	 if ($op == 'create' && $objectName == 'Contribution') {
+		// CRM_Core_Error::debug_var('id', $objectId);
+		// CRM_Core_Error::debug_var('objectref', $objectRef);
+		
+		// need to update id 15 to the name of the relationship
+		$result = civicrm_api3('Relationship', 'get', array(
+		  	'contact_id_a' => $objectRef->contact_id ,
+		  	'relationship_type_id' => 15,
+			));
+		
+		$relationarray = array();
+		foreach($result['values'] as $relationship){
+         	$relationarray[] = $relationship['contact_id_b'];
+      		}
+			
+		$result = civicrm_api3('Relationship', 'get', array(
+		  	'contact_id_b' => $objectRef->contact_id ,
+		  	'relationship_type_id' => 15,
+			));	
+		foreach($result['values'] as $relationship){
+         	$relationarray[] = $relationship['contact_id_a'];
+      		}
+			// CRM_Core_Error::debug_var('result', $result);
+			// CRM_Core_Error::debug_var('relation', $relationarray);
+		
+		// anyway to use an email template name not and id? This api is dependent on the Email API extension 
+		foreach($relationarray as $emailid){
+			$result2 = civicrm_api3('Email', 'send', array(
+				  'contact_id' => $emailid,
+				  'template_id' => "7",
+			));
+			// CRM_Core_Error::debug_var('result2', $result2);
+			// CRM_Core_Error::debug_var('emailid', $emailid);
+      	}
+		
+  	} else if ($op == 'edit' && $objectName == 'Contribution') {
+   		// do something
+  	}
+}
+
+/**
  * Implements hook_civicrm_config().
  *
  * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_config
